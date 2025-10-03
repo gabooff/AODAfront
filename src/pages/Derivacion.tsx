@@ -29,14 +29,17 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import { useComunas } from "../hooks/useComunas";
+import { useCrimes } from "../hooks/useCrimes";
+import { createDerivation } from "../services/apiDerivations";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Derivacion = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [recomendacion, setRecomendacion] = useState<any>(null);
-
+  const queryClient = useQueryClient();
   const { data: comunas } = useComunas();
-  console.log(comunas);
+  const { data: crimes } = useCrimes();
 
   const [formData, setFormData] = useState({
     age: "",
@@ -45,52 +48,93 @@ const Derivacion = () => {
     migrate_situation: "",
     crime: "",
     description: "",
-    factoresRiesgo: "",
+  });
+
+  const { mutate, isPending: isCreating } = useMutation({
+    mutationFn: createDerivation,
+    onSuccess: () => {
+      toast({
+        title: "Derivación registrada",
+        description: "La derivación ha sido guardada en el sistema.",
+        variant: "default",
+      });
+      queryClient.invalidateQueries({ queryKey: ["derivations"] });
+    },
+    onError: (err) => {
+      alert(err);
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    console.log(crimes);
+    const crime_id = crimes.find(
+      (crime) => crime.name === formData.crime
+    ).crime_id;
+    const comuna_id = comunas.find(
+      (comuna) => comuna.nombre === formData.comuna
+    ).id;
 
-    // Simular llamada a IA
-    setTimeout(() => {
-      setRecomendacion({
-        centro: "Centro de Atención Integral San Miguel",
-        direccion: "Av. José Miguel Carrera 3456, San Miguel",
-        telefono: "+56 2 2345 6789",
-        especialidad:
-          "Atención a víctimas de violencia intrafamiliar y delitos sexuales",
-        motivo:
-          "El centro cuenta con especialistas en casos similares y está ubicado en la comuna de residencia de la víctima",
-        disponibilidad: "Disponible - Próxima cita: Mañana 14:30 hrs",
-        confianza: 92,
-      });
-      setIsLoading(false);
-      toast({
-        title: "Recomendación generada",
-        description: "AODA ha procesado el caso exitosamente.",
-      });
-    }, 2000);
+    const payload = {
+      age: Number(formData.age),
+      sex: formData.sex,
+      migrate_situation: formData.migrate_situation
+        ? formData.migrate_situation === "Si"
+        : false,
+      description: formData.description,
+      crime_id,
+      comuna_id,
+    };
+    mutate(payload);
+
+    // setFormData({
+    //   age: "",
+    //   sex: "",
+    //   comuna: "",
+    //   migrate_situation: "",
+    //   crime: "",
+    //   description: "",
+    // });
+
+    // setIsLoading(true);
+
+    // // Simular llamada a IA
+    // setTimeout(() => {
+    //   setRecomendacion({
+    //     centro: "Centro de Atención Integral San Miguel",
+    //     direccion: "Av. José Miguel Carrera 3456, San Miguel",
+    //     telefono: "+56 2 2345 6789",
+    //     especialidad:
+    //       "Atención a víctimas de violencia intrafamiliar y delitos sexuales",
+    //     motivo:
+    //       "El centro cuenta con especialistas en casos similares y está ubicado en la comuna de residencia de la víctima",
+    //     disponibilidad: "Disponible - Próxima cita: Mañana 14:30 hrs",
+    //     confianza: 92,
+    //   });
+    //   setIsLoading(false);
+    //   toast({
+    //     title: "Recomendación generada",
+    //     description: "AODA ha procesado el caso exitosamente.",
+    //   });
+    // }, 2000);
   };
 
-  const handleConfirmar = () => {
-    toast({
-      title: "Derivación registrada",
-      description: "La derivación ha sido guardada en el sistema.",
-      variant: "default",
-    });
-    // Reset form
-    setFormData({
-      age: "",
-      sex: "",
-      comuna: "",
-      situacionMigratoria: "",
-      tipoDelito: "",
-      descripcionCaso: "",
-      factoresRiesgo: "",
-    });
-    setRecomendacion(null);
-  };
+  // const handleConfirmar = () => {
+  //   toast({
+  //     title: "Derivación registrada",
+  //     description: "La derivación ha sido guardada en el sistema.",
+  //     variant: "default",
+  //   });
+  //   // Reset form
+  //   setFormData({
+  //     age: "",
+  //     sex: "",
+  //     comuna: "",
+  //     migrate_situation: "",
+  //     crime: "",
+  //     description: "",
+  //   });
+  // };
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,9 +172,12 @@ const Derivacion = () => {
                     <Input
                       id="edad"
                       type="number"
-                      value={formData.edad}
+                      value={formData.age}
                       onChange={(e) =>
-                        setFormData({ ...formData, edad: e.target.value })
+                        setFormData({
+                          ...formData,
+                          age: Number(e.target.value),
+                        })
                       }
                       placeholder="Ej: 28"
                       required
@@ -139,9 +186,9 @@ const Derivacion = () => {
                   <div className="space-y-2">
                     <Label htmlFor="sexo">Sexo</Label>
                     <Select
-                      value={formData.sexo}
+                      value={formData.sex}
                       onValueChange={(value) =>
-                        setFormData({ ...formData, sexo: value })
+                        setFormData({ ...formData, sex: value })
                       }
                     >
                       <SelectTrigger>
@@ -170,43 +217,30 @@ const Derivacion = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar comuna" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent side="bottom" className="max-h-[300px]">
                       {comunas?.map((comuna) => (
-                        <SelectItem value={comuna}>{comuna.nombre}</SelectItem>
+                        <SelectItem key={comuna.nombre} value={comuna.nombre}>
+                          {comuna.nombre}
+                        </SelectItem>
                       ))}
-                      {/* <SelectItem value="santiago">Santiago</SelectItem>
-                      <SelectItem value="las-condes">Las Condes</SelectItem>
-                      <SelectItem value="providencia">Providencia</SelectItem>
-                      <SelectItem value="san-miguel">San Miguel</SelectItem>
-                      <SelectItem value="maipu">Maipú</SelectItem>
-                      <SelectItem value="puente-alto">Puente Alto</SelectItem> */}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="situacionMigratoria">
-                    Situación Migratoria
-                  </Label>
+                  <Label htmlFor="situacionMigratoria">Migrante</Label>
                   <Select
-                    value={formData.situacionMigratoria}
+                    value={formData.migrate_situation}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, situacionMigratoria: value })
+                      setFormData({ ...formData, migrate_situation: value })
                     }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="chileno">Chileno/a</SelectItem>
-                      <SelectItem value="residente">
-                        Residente permanente
-                      </SelectItem>
-                      <SelectItem value="temporal">Visa temporal</SelectItem>
-                      <SelectItem value="irregular">
-                        Situación irregular
-                      </SelectItem>
-                      <SelectItem value="refugiado">Refugiado/a</SelectItem>
+                      <SelectItem value="Si">Si</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -214,27 +248,20 @@ const Derivacion = () => {
                 <div className="space-y-2">
                   <Label htmlFor="tipoDelito">Tipo de Delito</Label>
                   <Select
-                    value={formData.tipoDelito}
+                    value={formData.crime}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, tipoDelito: value })
+                      setFormData({ ...formData, crime: value })
                     }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar tipo de delito" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="violencia-intrafamiliar">
-                        Violencia Intrafamiliar
-                      </SelectItem>
-                      <SelectItem value="delito-sexual">
-                        Delito Sexual
-                      </SelectItem>
-                      <SelectItem value="robo-violencia">
-                        Robo con Violencia
-                      </SelectItem>
-                      <SelectItem value="amenazas">Amenazas</SelectItem>
-                      <SelectItem value="lesiones">Lesiones</SelectItem>
-                      <SelectItem value="otro">Otro</SelectItem>
+                    <SelectContent side="bottom" className="max-h-[300px]">
+                      {crimes?.map((crime) => (
+                        <SelectItem key={crime.name} value={crime.name}>
+                          {crime.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -243,33 +270,15 @@ const Derivacion = () => {
                   <Label htmlFor="descripcionCaso">Descripción del Caso</Label>
                   <Textarea
                     id="descripcionCaso"
-                    value={formData.descripcionCaso}
+                    value={formData.description}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        descripcionCaso: e.target.value,
+                        description: e.target.value,
                       })
                     }
                     placeholder="Descripción breve del caso sin datos personales identificables..."
                     rows={4}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="factoresRiesgo">
-                    Factores de Riesgo Adicionales
-                  </Label>
-                  <Textarea
-                    id="factoresRiesgo"
-                    value={formData.factoresRiesgo}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        factoresRiesgo: e.target.value,
-                      })
-                    }
-                    placeholder="Ej: Vulnerabilidad social, discapacidad, menores de edad involucrados..."
-                    rows={3}
                   />
                 </div>
 
@@ -311,73 +320,74 @@ const Derivacion = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-sm">
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Confianza: {recomendacion.confianza}%
-                    </Badge>
-                    <Badge variant="outline" className="text-health-success">
-                      {recomendacion.disponibilidad}
-                    </Badge>
-                  </div>
+                <p></p>
+                // <div className="space-y-6">
+                //   <div className="flex items-center justify-between">
+                //     <Badge variant="secondary" className="text-sm">
+                //       <CheckCircle className="h-4 w-4 mr-1" />
+                //       Confianza: {recomendacion.confianza}%
+                //     </Badge>
+                //     <Badge variant="outline" className="text-health-success">
+                //       {recomendacion.disponibilidad}
+                //     </Badge>
+                //   </div>
 
-                  <div>
-                    <h3 className="text-xl font-semibold text-foreground mb-2">
-                      {recomendacion.centro}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {recomendacion.especialidad}
-                    </p>
-                  </div>
+                //   <div>
+                //     <h3 className="text-xl font-semibold text-foreground mb-2">
+                //       {recomendacion.centro}
+                //     </h3>
+                //     <p className="text-sm text-muted-foreground mb-4">
+                //       {recomendacion.especialidad}
+                //     </p>
+                //   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium">Dirección</p>
-                        <p className="text-sm text-muted-foreground">
-                          {recomendacion.direccion}
-                        </p>
-                      </div>
-                    </div>
+                //   <div className="space-y-3">
+                //     <div className="flex items-start space-x-2">
+                //       <MapPin className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
+                //       <div>
+                //         <p className="text-sm font-medium">Dirección</p>
+                //         <p className="text-sm text-muted-foreground">
+                //           {recomendacion.direccion}
+                //         </p>
+                //       </div>
+                //     </div>
 
-                    <div className="flex items-start space-x-2">
-                      <Calendar className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium">Teléfono</p>
-                        <p className="text-sm text-muted-foreground">
-                          {recomendacion.telefono}
-                        </p>
-                      </div>
-                    </div>
+                //     <div className="flex items-start space-x-2">
+                //       <Calendar className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
+                //       <div>
+                //         <p className="text-sm font-medium">Teléfono</p>
+                //         <p className="text-sm text-muted-foreground">
+                //           {recomendacion.telefono}
+                //         </p>
+                //       </div>
+                //     </div>
 
-                    <div className="flex items-start space-x-2">
-                      <AlertTriangle className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          Motivo de la Recomendación
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {recomendacion.motivo}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                //     <div className="flex items-start space-x-2">
+                //       <AlertTriangle className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
+                //       <div>
+                //         <p className="text-sm font-medium">
+                //           Motivo de la Recomendación
+                //         </p>
+                //         <p className="text-sm text-muted-foreground">
+                //           {recomendacion.motivo}
+                //         </p>
+                //       </div>
+                //     </div>
+                //   </div>
 
-                  <div className="pt-4 space-y-2">
-                    <Button onClick={handleConfirmar} className="w-full">
-                      Confirmar y Registrar Derivación
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setRecomendacion(null)}
-                    >
-                      Solicitar Nueva Recomendación
-                    </Button>
-                  </div>
-                </div>
+                //   <div className="pt-4 space-y-2">
+                //     <Button onClick={handleConfirmar} className="w-full">
+                //       Confirmar y Registrar Derivación
+                //     </Button>
+                //     <Button
+                //       variant="outline"
+                //       className="w-full"
+                //       onClick={() => setRecomendacion(null)}
+                //     >
+                //       Solicitar Nueva Recomendación
+                //     </Button>
+                //   </div>
+                // </div>
               )}
             </CardContent>
           </Card>

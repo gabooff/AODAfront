@@ -7,6 +7,8 @@ export async function getDerivations() {
 }
 
 export async function createDerivation(derivation) {
-  const { data } = await apiAnova.post("/derivation/create");
-  return data;
+  console.log(derivation);
+  const { data } = await apiAnova.post("/derivation/create", derivation);
+
+  // return data;
 }
