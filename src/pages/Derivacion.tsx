@@ -25,6 +25,7 @@ import {
   Calendar,
   AlertTriangle,
   CheckCircle,
+  CirclePlusIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
@@ -32,25 +33,24 @@ import { useComunas } from "../hooks/useComunas";
 import { useCrimes } from "../hooks/useCrimes";
 import { createDerivation } from "../services/apiDerivations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Controller, useForm } from "react-hook-form";
+import { DerivationPayload } from "@/types";
 
 const Derivacion = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { control, register, handleSubmit, reset, formState } = useForm();
+  const { errors } = formState;
   const [recomendacion, setRecomendacion] = useState<any>(null);
   const queryClient = useQueryClient();
   const { data: comunas } = useComunas();
   const { data: crimes } = useCrimes();
 
-  const [formData, setFormData] = useState({
-    age: "",
-    sex: "",
-    comuna: "",
-    migrate_situation: "",
-    crime: "",
-    description: "",
-  });
-
-  const { mutate, isPending: isCreating } = useMutation({
+  const { mutate, isPending: isCreating } = useMutation<
+    unknown,
+    Error,
+    DerivationPayload
+  >({
     mutationFn: createDerivation,
     onSuccess: () => {
       toast({
@@ -59,64 +59,38 @@ const Derivacion = () => {
         variant: "default",
       });
       queryClient.invalidateQueries({ queryKey: ["derivations"] });
+      reset({
+        age: "",
+        sex: "",
+        comuna: "",
+        migrate_situation: "",
+        crime: "",
+        description: "",
+      });
     },
     onError: (err) => {
       alert(err);
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log(crimes);
-    const crime_id = crimes.find(
-      (crime) => crime.name === formData.crime
-    ).crime_id;
+  const onSubmit = (data) => {
+    console.log(data);
+    const crime_id = crimes.find((crime) => crime.name === data.crime).crime_id;
     const comuna_id = comunas.find(
-      (comuna) => comuna.nombre === formData.comuna
+      (comuna) => comuna.nombre === data.comuna
     ).id;
 
     const payload = {
-      age: Number(formData.age),
-      sex: formData.sex,
-      migrate_situation: formData.migrate_situation
-        ? formData.migrate_situation === "Si"
+      age: Number(data.age),
+      sex: data.sex,
+      migrate_situation: data.migrate_situation
+        ? data.migrate_situation === "Si"
         : false,
-      description: formData.description,
+      description: data.description,
       crime_id,
       comuna_id,
     };
     mutate(payload);
-
-    // setFormData({
-    //   age: "",
-    //   sex: "",
-    //   comuna: "",
-    //   migrate_situation: "",
-    //   crime: "",
-    //   description: "",
-    // });
-
-    // setIsLoading(true);
-
-    // // Simular llamada a IA
-    // setTimeout(() => {
-    //   setRecomendacion({
-    //     centro: "Centro de Atención Integral San Miguel",
-    //     direccion: "Av. José Miguel Carrera 3456, San Miguel",
-    //     telefono: "+56 2 2345 6789",
-    //     especialidad:
-    //       "Atención a víctimas de violencia intrafamiliar y delitos sexuales",
-    //     motivo:
-    //       "El centro cuenta con especialistas en casos similares y está ubicado en la comuna de residencia de la víctima",
-    //     disponibilidad: "Disponible - Próxima cita: Mañana 14:30 hrs",
-    //     confianza: 92,
-    //   });
-    //   setIsLoading(false);
-    //   toast({
-    //     title: "Recomendación generada",
-    //     description: "AODA ha procesado el caso exitosamente.",
-    //   });
-    // }, 2000);
   };
 
   // const handleConfirmar = () => {
@@ -165,121 +139,203 @@ const Derivacion = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edad">Edad</Label>
+                    <Label htmlFor="age">Edad</Label>
                     <Input
-                      id="edad"
+                      id="age"
                       type="number"
-                      value={formData.age}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          age: Number(e.target.value),
-                        })
-                      }
+                      {...register("age", {
+                        required: "Campo obligatorio",
+                        min: {
+                          value: 0,
+                          message: "Número negativos no permitidos",
+                        },
+                      })}
                       placeholder="Ej: 28"
-                      required
+                      className={
+                        errors?.age?.message
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
+                    {errors.age?.message && (
+                      <p className="text-sm text-red-500">
+                        {String(errors.age.message)}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sexo">Sexo</Label>
-                    <Select
-                      value={formData.sex}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, sex: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="masculino">Masculino</SelectItem>
-                        <SelectItem value="femenino">Femenino</SelectItem>
-                        <SelectItem value="otro">Otro</SelectItem>
-                        <SelectItem value="no-especifica">
-                          Prefiere no especificar
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="sex">Sexo</Label>
+                    <Controller
+                      name="sex"
+                      control={control}
+                      rules={{ required: "Campo obligatorio" }}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger
+                            className={
+                              errors.sex
+                                ? "border-red-500 focus:ring-red-500"
+                                : ""
+                            }
+                          >
+                            <SelectValue placeholder="Seleccionar" />
+                          </SelectTrigger>
+                          <SelectContent side="bottom">
+                            <SelectItem value="masculino">Masculino</SelectItem>
+                            <SelectItem value="femenino">Femenino</SelectItem>
+                            <SelectItem value="otro">Otro</SelectItem>
+                            <SelectItem value="no-especifica">
+                              Prefiere no especificar
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.sex?.message && (
+                      <p className="text-sm text-red-500">
+                        {String(errors.sex.message)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="comuna">Comuna de Residencia</Label>
-                  <Select
-                    value={formData.comuna}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, comuna: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar comuna" />
-                    </SelectTrigger>
-                    <SelectContent side="bottom" className="max-h-[300px]">
-                      {comunas?.map((comuna) => (
-                        <SelectItem key={comuna.nombre} value={comuna.nombre}>
-                          {comuna.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="comuna"
+                    control={control}
+                    rules={{ required: "Campo obligatorio" }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger
+                          className={
+                            errors?.comuna
+                              ? "border-red-500 focus:ring-red-500"
+                              : ""
+                          }
+                        >
+                          <SelectValue placeholder="Seleccionar comuna" />
+                        </SelectTrigger>
+                        <SelectContent side="bottom" className="max-h-[300px]">
+                          {comunas?.map((comuna) => (
+                            <SelectItem
+                              key={comuna.nombre}
+                              value={comuna.nombre}
+                            >
+                              {comuna.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors?.comuna?.message && (
+                    <p className="text-sm text-red-500">
+                      {String(errors.comuna.message)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="situacionMigratoria">Migrante</Label>
-                  <Select
-                    value={formData.migrate_situation}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, migrate_situation: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Si">Si</SelectItem>
-                      <SelectItem value="No">No</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="migrate_situation">Migrante</Label>
+                  <Controller
+                    name="migrate_situation"
+                    control={control}
+                    rules={{ required: "Campo obligatorio" }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger
+                          className={
+                            errors?.migrate_situation
+                              ? "border-red-500 focus:ring-red-500"
+                              : ""
+                          }
+                        >
+                          <SelectValue placeholder="Seleccionar" />
+                        </SelectTrigger>
+                        <SelectContent side="bottom">
+                          <SelectItem value="Si">Si</SelectItem>
+                          <SelectItem value="No">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.migrate_situation?.message && (
+                    <p className="text-sm text-red-500">
+                      {String(errors.migrate_situation.message)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tipoDelito">Tipo de Delito</Label>
-                  <Select
-                    value={formData.crime}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, crime: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar tipo de delito" />
-                    </SelectTrigger>
-                    <SelectContent side="bottom" className="max-h-[300px]">
-                      {crimes?.map((crime) => (
-                        <SelectItem key={crime.name} value={crime.name}>
-                          {crime.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="crime">Tipo de Delito</Label>
+                  <Controller
+                    name="crime"
+                    control={control}
+                    rules={{ required: "Campo obligatorio" }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger
+                          className={
+                            errors?.crime
+                              ? "border-red-500 focus:ring-red-500"
+                              : ""
+                          }
+                        >
+                          <SelectValue placeholder="Seleccionar tipo de delito" />
+                        </SelectTrigger>
+                        <SelectContent side="bottom" className="max-h-[300px]">
+                          {crimes?.map((crime) => (
+                            <SelectItem key={crime.name} value={crime.name}>
+                              {crime.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors?.crime?.message && (
+                    <p className="text-sm text-red-500">
+                      {String(errors.crime.message)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="descripcionCaso">Descripción del Caso</Label>
                   <Textarea
                     id="descripcionCaso"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        description: e.target.value,
-                      })
-                    }
                     placeholder="Descripción breve del caso sin datos personales identificables..."
                     rows={4}
+                    {...register("description", {
+                      required: "Campo requirido",
+                    })}
+                    className={
+                      errors?.description
+                        ? "border-red-500 focus:ring-red-500"
+                        : ""
+                    }
                   />
+                  {errors?.description?.message && (
+                    <p className="text-sm text-red-500">
+                      {String(errors.description.message)}
+                    </p>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
@@ -290,8 +346,8 @@ const Derivacion = () => {
                     </>
                   ) : (
                     <>
-                      <Brain className="mr-2 h-4 w-4" />
-                      Obtener Recomendación AODA
+                      <CirclePlusIcon className="mr-2 h-4 w-4" />
+                      Crear derivación
                     </>
                   )}
                 </Button>

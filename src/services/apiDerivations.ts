@@ -1,3 +1,4 @@
+import { DerivationPayload } from "@/types";
 import apiAnova from "./api";
 
 export async function getDerivations() {
@@ -6,8 +7,7 @@ export async function getDerivations() {
   return data;
 }
 
-export async function createDerivation(derivation) {
-  console.log(derivation);
+export async function createDerivation(derivation: DerivationPayload) {
   const { data } = await apiAnova.post("/derivation/create", derivation);
 
   // return data;
