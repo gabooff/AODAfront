@@ -27,6 +27,8 @@ const Dashboard = () => {
     queryFn: getDerivations,
   });
 
+  console.log(derivations);
+
   const kpis = {
     derivacionesTotales: derivations?.length || 0,
     derivacionesHoy: 18,

@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import { useComunas } from "../hooks/useComunas";
 import { useCrimes } from "../hooks/useCrimes";
+import { useCenters } from "../hooks/useCenters";
 import { createDerivation } from "../services/apiDerivations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
@@ -45,6 +46,7 @@ const Derivacion = () => {
   const queryClient = useQueryClient();
   const { data: comunas } = useComunas();
   const { data: crimes } = useCrimes();
+  const { data: centers } = useCenters();
 
   const { mutate, isPending: isCreating } = useMutation<
     unknown,
@@ -74,11 +76,14 @@ const Derivacion = () => {
   });
 
   const onSubmit = (data) => {
-    console.log(data);
     const crime_id = crimes.find((crime) => crime.name === data.crime).crime_id;
     const comuna_id = comunas.find(
       (comuna) => comuna.nombre === data.comuna
     ).id;
+
+    const center_id = centers.find(
+      (center) => center.name === data.center
+    ).center_id;
 
     const payload = {
       age: Number(data.age),
@@ -87,6 +92,7 @@ const Derivacion = () => {
         ? data.migrate_situation === "Si"
         : false,
       description: data.description,
+      center_id,
       crime_id,
       comuna_id,
     };
@@ -244,7 +250,42 @@ const Derivacion = () => {
                     </p>
                   )}
                 </div>
-
+                <div className="space-y-2">
+                  <Label htmlFor="center">Centro de Derivación</Label>
+                  <Controller
+                    name="center"
+                    control={control}
+                    rules={{ required: "Campo obligatorio" }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger
+                          className={
+                            errors?.center
+                              ? "border-red-500 focus:ring-red-500"
+                              : ""
+                          }
+                        >
+                          <SelectValue placeholder="Seleccionar centro" />
+                        </SelectTrigger>
+                        <SelectContent side="bottom" className="max-h-[300px]">
+                          {centers?.map((center) => (
+                            <SelectItem key={center.name} value={center.name}>
+                              {center.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors?.comuna?.message && (
+                    <p className="text-sm text-red-500">
+                      {String(errors.center.message)}
+                    </p>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="migrate_situation">Migrante</Label>
                   <Controller
