@@ -1,5 +1,5 @@
 import { DerivationPayload } from "@/types";
-import apiAnova from "./api";
+import { apiAnova } from "./api";
 
 export async function getDerivations() {
   const { data } = await apiAnova.get("/derivation/");
