@@ -1,4 +1,4 @@
-// 3. Auth Hooks using React Query (hooks/useAuth.ts)
+// Auth Hooks using React Query (hooks/useAuth.ts)
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   authApi,
