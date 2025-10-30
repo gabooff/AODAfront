@@ -50,20 +50,6 @@ const Login: React.FC<LoginProps> = ({
     !loading
   );
 
-  // const mockLogin = async ({
-  //   email,
-  //   password,
-  // }: {
-  //   email: string;
-  //   password: string;
-  // }) => {
-  //   await new Promise((r) => setTimeout(r, 1000));
-  //   if (email === "admin@demo.cl" && password === "12345678") {
-  //     return { ok: true, message: "¡Bienvenido!" };
-  //   }
-  //   return { ok: false, message: "Credenciales incorrectas" };
-  // };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -91,7 +77,7 @@ const Login: React.FC<LoginProps> = ({
           <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-100">
             <div className="mb-6 text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-900 text-white font-bold shadow-sm">
-                {brand?.[0] || "A"}
+                <img src={"aoda-logo.jpeg"} />
               </div>
               <h1 className="mt-4 text-2xl font-bold text-slate-900">
                 {title}

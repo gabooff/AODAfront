@@ -22,7 +22,10 @@ const Navigation = () => {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <Shield className="h-8 w-8 text-health-primary" />
+              <img
+                src={"aoda-logo.jpeg"}
+                className="h-8 w-8 text-health-primary"
+              />
               <div>
                 <h1 className="text-lg font-bold text-foreground">AODA</h1>
                 <p className="text-xs text-muted-foreground">

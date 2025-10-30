@@ -18,24 +18,35 @@ import {
 import Navigation from "@/components/Navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getDerivations } from "../services/apiDerivations";
+import { useCenters, useTopCenters } from "../hooks/useCenters";
+import { useDerivations } from "@/hooks/useDerivations";
 
 const Dashboard = () => {
   // Datos simulados para KPIs
 
-  const { data: derivations } = useQuery({
-    queryKey: ["derivations"],
-    queryFn: getDerivations,
-  });
+  const { data: derivations } = useDerivations();
+  const { data: centers } = useCenters();
+  const { data: topCenters } = useTopCenters();
 
-  console.log(derivations);
-
+  // Derivations KPIS
+  const createdTime = derivations?.map(
+    (derivation) => new Date(derivation.created_at)
+  );
+  const currentDate = new Date().toDateString();
+  const todayDerivations = createdTime?.filter(
+    (time) => time.toDateString() === currentDate
+  );
+  const pendingDerivations = derivations?.filter(
+    (derivation) => derivation.state === "pendiente"
+  );
   const kpis = {
     derivacionesTotales: derivations?.length || 0,
-    derivacionesHoy: 18,
-    centrosActivos: 45,
+    derivacionesHoy: todayDerivations?.length || 0,
+    centrosActivos: centers?.length || 0,
     tiempoPromedioProceso: "12 min",
     satisfaccionUsuario: 87,
     precision: 94,
+    pendingCases: pendingDerivations?.length || 0,
   };
 
   const derivacionesPorTipo = [
@@ -52,38 +63,23 @@ const Dashboard = () => {
       color: "bg-orange-500",
     },
     {
-      tipo: "Robo con Violencia",
+      tipo: "Trata de personas",
       cantidad: 234,
       porcentaje: 18.8,
       color: "bg-yellow-500",
     },
-    { tipo: "Amenazas", cantidad: 156, porcentaje: 12.5, color: "bg-blue-500" },
+    {
+      tipo: "Explotación laboral",
+      cantidad: 156,
+      porcentaje: 12.5,
+      color: "bg-blue-500",
+    },
     { tipo: "Otros", cantidad: 103, porcentaje: 8.3, color: "bg-purple-500" },
   ];
 
-  const centrosMasDerivados = [
-    {
-      centro: "Centro de Atención Integral San Miguel",
-      derivaciones: 89,
-      disponibilidad: "Alta",
-    },
-    {
-      centro: "CAVS Santiago Centro",
-      derivaciones: 76,
-      disponibilidad: "Media",
-    },
-    {
-      centro: "Centro de la Mujer Las Condes",
-      derivaciones: 67,
-      disponibilidad: "Alta",
-    },
-    { centro: "CAVI Maipú", derivaciones: 54, disponibilidad: "Baja" },
-    {
-      centro: "Centro Integral Puente Alto",
-      derivaciones: 43,
-      disponibilidad: "Alta",
-    },
-  ];
+  // Centers KPI
+
+  console.log(topCenters);
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,7 +183,7 @@ const Dashboard = () => {
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">7</div>
+              <div className="text-2xl font-bold">{kpis.pendingCases}</div>
               <p className="text-xs text-muted-foreground">
                 Requieren seguimiento
               </p>
@@ -236,7 +232,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {centrosMasDerivados.map((centro, index) => (
+                {topCenters?.map((centro, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 border rounded-lg"
@@ -246,12 +242,12 @@ const Dashboard = () => {
                         {centro.centro}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {centro.derivaciones} derivaciones
+                        {centro.total_derivaciones} derivaciones
                       </p>
                     </div>
                     <Badge
                       variant={
-                        centro.disponibilidad === "Alta"
+                        centro.total_derivaciones === "Alta"
                           ? "default"
                           : centro.disponibilidad === "Media"
                           ? "secondary"

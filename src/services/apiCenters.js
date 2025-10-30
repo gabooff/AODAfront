@@ -5,3 +5,9 @@ export async function getCenters() {
 
   return data;
 }
+
+export async function getTopCenters() {
+  const { data } = await apiAnova.get("/centers/top");
+
+  return data;
+}
