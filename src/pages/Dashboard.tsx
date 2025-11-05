@@ -79,8 +79,6 @@ const Dashboard = () => {
 
   // Centers KPI
 
-  console.log(topCenters);
-
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -265,83 +263,6 @@ const Dashboard = () => {
         </div>
 
         {/* Métricas Adicionales */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Eficiencia del Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">
-                    Casos procesados automáticamente
-                  </span>
-                  <span className="text-sm font-medium">96%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Derivaciones exitosas</span>
-                  <span className="text-sm font-medium">91%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Tiempo promedio de respuesta</span>
-                  <span className="text-sm font-medium">8 seg</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Cobertura Territorial</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Comunas cubiertas</span>
-                  <span className="text-sm font-medium">34/52</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Población atendida</span>
-                  <span className="text-sm font-medium">5.2M</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Centros especializados</span>
-                  <span className="text-sm font-medium">28</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Tendencias</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Incremento mensual</span>
-                  <span className="text-sm font-medium text-green-600">
-                    +12%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Mejora en tiempo</span>
-                  <span className="text-sm font-medium text-green-600">
-                    -23%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Satisfacción usuario</span>
-                  <span className="text-sm font-medium text-green-600">
-                    +8%
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </main>
     </div>
   );

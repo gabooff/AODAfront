@@ -36,17 +36,21 @@ import { createDerivation } from "../services/apiDerivations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
 import { DerivationPayload } from "@/types";
+import { chatWihAgent } from "@/services/apiAgents";
+import { ChatInterface } from "@/components/ChatInterface";
+import { useUser } from "@/hooks/useAuth";
 
 const Derivacion = () => {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const { control, register, handleSubmit, reset, formState } = useForm();
-  const { errors } = formState;
-  const [recomendacion, setRecomendacion] = useState<any>(null);
   const queryClient = useQueryClient();
   const { data: comunas } = useComunas();
   const { data: crimes } = useCrimes();
   const { data: centers } = useCenters();
+  const { data: user } = useUser();
+
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const { control, register, handleSubmit, reset, formState } = useForm();
+  const { errors } = formState;
 
   const { mutate, isPending: isCreating } = useMutation<
     unknown,
@@ -82,7 +86,7 @@ const Derivacion = () => {
     ).id;
 
     const center_id = centers.find(
-      (center) => center.name === data.center
+      (center) => center.institution === data.center
     ).center_id;
 
     const payload = {
@@ -99,22 +103,14 @@ const Derivacion = () => {
     mutate(payload);
   };
 
-  // const handleConfirmar = () => {
-  //   toast({
-  //     title: "Derivación registrada",
-  //     description: "La derivación ha sido guardada en el sistema.",
-  //     variant: "default",
-  //   });
-  //   // Reset form
-  //   setFormData({
-  //     age: "",
-  //     sex: "",
-  //     comuna: "",
-  //     migrate_situation: "",
-  //     crime: "",
-  //     description: "",
-  //   });
-  // };
+  const handleChatMessage = async (message: string): Promise<string> => {
+    console.log(message);
+    const response = await chatWihAgent({
+      message,
+      user_id: user.id,
+    });
+    return response;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -272,8 +268,11 @@ const Derivacion = () => {
                         </SelectTrigger>
                         <SelectContent side="bottom" className="max-h-[300px]">
                           {centers?.map((center) => (
-                            <SelectItem key={center.name} value={center.name}>
-                              {center.name}
+                            <SelectItem
+                              key={center.institution}
+                              value={center.institution}
+                            >
+                              {center.institution}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -407,85 +406,8 @@ const Derivacion = () => {
                 Centro recomendado basado en el análisis del agente inteligente.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {!recomendacion ? (
-                <div className="text-center py-12">
-                  <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    Complete el formulario y haga clic en "Obtener Recomendación
-                    AODA" para ver la sugerencia.
-                  </p>
-                </div>
-              ) : (
-                <p></p>
-                // <div className="space-y-6">
-                //   <div className="flex items-center justify-between">
-                //     <Badge variant="secondary" className="text-sm">
-                //       <CheckCircle className="h-4 w-4 mr-1" />
-                //       Confianza: {recomendacion.confianza}%
-                //     </Badge>
-                //     <Badge variant="outline" className="text-health-success">
-                //       {recomendacion.disponibilidad}
-                //     </Badge>
-                //   </div>
-
-                //   <div>
-                //     <h3 className="text-xl font-semibold text-foreground mb-2">
-                //       {recomendacion.centro}
-                //     </h3>
-                //     <p className="text-sm text-muted-foreground mb-4">
-                //       {recomendacion.especialidad}
-                //     </p>
-                //   </div>
-
-                //   <div className="space-y-3">
-                //     <div className="flex items-start space-x-2">
-                //       <MapPin className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
-                //       <div>
-                //         <p className="text-sm font-medium">Dirección</p>
-                //         <p className="text-sm text-muted-foreground">
-                //           {recomendacion.direccion}
-                //         </p>
-                //       </div>
-                //     </div>
-
-                //     <div className="flex items-start space-x-2">
-                //       <Calendar className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
-                //       <div>
-                //         <p className="text-sm font-medium">Teléfono</p>
-                //         <p className="text-sm text-muted-foreground">
-                //           {recomendacion.telefono}
-                //         </p>
-                //       </div>
-                //     </div>
-
-                //     <div className="flex items-start space-x-2">
-                //       <AlertTriangle className="h-4 w-4 text-health-primary mt-1 flex-shrink-0" />
-                //       <div>
-                //         <p className="text-sm font-medium">
-                //           Motivo de la Recomendación
-                //         </p>
-                //         <p className="text-sm text-muted-foreground">
-                //           {recomendacion.motivo}
-                //         </p>
-                //       </div>
-                //     </div>
-                //   </div>
-
-                //   <div className="pt-4 space-y-2">
-                //     <Button onClick={handleConfirmar} className="w-full">
-                //       Confirmar y Registrar Derivación
-                //     </Button>
-                //     <Button
-                //       variant="outline"
-                //       className="w-full"
-                //       onClick={() => setRecomendacion(null)}
-                //     >
-                //       Solicitar Nueva Recomendación
-                //     </Button>
-                //   </div>
-                // </div>
-              )}
+            <CardContent className="h-[600px]">
+              <ChatInterface onSendMessage={handleChatMessage} />
             </CardContent>
           </Card>
         </div>

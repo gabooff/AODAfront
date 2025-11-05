@@ -30,7 +30,6 @@ export const authApi = {
     const formData = new URLSearchParams();
     formData.append("username", credentials.username);
     formData.append("password", credentials.password);
-    console.log(formData);
     const response = await apiAnova.post<LoginResponse>(
       "/auth/login",
       formData,
