@@ -4,17 +4,24 @@ import { Input } from "@/components/ui/input";
 import { Brain, Send, User, Bot } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface Message {
+export interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
 interface ChatInterfaceProps {
+  conversationId: string | null;
+  messages: Message[];
   onSendMessage: (message: string) => Promise<string>;
+  onMessagesChange: (messages: Message[]) => void;
 }
 
-export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+export const ChatInterface = ({
+  conversationId,
+  messages,
+  onSendMessage,
+  onMessagesChange,
+}: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -29,7 +36,8 @@ export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    onMessagesChange(updatedMessages);
     setInput("");
     setIsLoading(true);
 
@@ -39,13 +47,13 @@ export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         role: "assistant",
         content: response,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      onMessagesChange([...updatedMessages, assistantMessage]);
     } catch (error) {
       const errorMessage: Message = {
         role: "assistant",
         content: "Lo siento, hubo un error al procesar tu mensaje.",
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      onMessagesChange([...updatedMessages, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +73,9 @@ export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           <div className="text-center">
             <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              Pregunta lo que necesites sobre derivaciones y centros.
+              {conversationId !== null
+                ? "Pregunta lo que necesites sobre derivaciones y centros"
+                : "Crear una conversación para hablar con el agente"}
             </p>
           </div>
         </div>
@@ -120,18 +130,20 @@ export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         </ScrollArea>
       )}
 
-      <div className="mt-4 flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Escribe tu pregunta..."
-          disabled={isLoading}
-        />
-        <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
+      {conversationId !== null && (
+        <div className="mt-4 flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Escribe tu pregunta..."
+            disabled={isLoading}
+          />
+          <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

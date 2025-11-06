@@ -37,7 +37,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
 import { DerivationPayload } from "@/types";
 import { chatWihAgent } from "@/services/apiAgents";
-import { ChatInterface } from "@/components/ChatInterface";
+import { ChatInterface, Message } from "@/components/ChatInterface";
+import {
+  ConversationsList,
+  Conversation,
+} from "@/components/ConversationLists";
 import { useUser } from "@/hooks/useAuth";
 
 const Derivacion = () => {
@@ -51,6 +55,15 @@ const Derivacion = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { control, register, handleSubmit, reset, formState } = useForm();
   const { errors } = formState;
+
+  // Chat state
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(null);
+  const [conversationMessages, setConversationMessages] = useState<
+    Record<string, Message[]>
+  >({});
 
   const { mutate, isPending: isCreating } = useMutation<
     unknown,
@@ -99,18 +112,69 @@ const Derivacion = () => {
       center_id,
       crime_id,
       comuna_id,
+      user_id: user.id,
     };
     mutate(payload);
   };
 
   const handleChatMessage = async (message: string): Promise<string> => {
-    console.log(message);
     const response = await chatWihAgent({
       message,
       user_id: user.id,
     });
     return response;
   };
+
+  const handleNewConversation = () => {
+    const newId = `conv-${Date.now()}`;
+    const newConversation: Conversation = {
+      id: newId,
+      title: `Conversación ${conversations.length + 1}`,
+      timestamp: new Date(),
+    };
+    setConversations((prev) => [newConversation, ...prev]);
+    setActiveConversationId(newId);
+    setConversationMessages((prev) => ({ ...prev, [newId]: [] }));
+  };
+
+  const handleSelectConversation = (id: string) => {
+    setActiveConversationId(id);
+  };
+
+  const handleMessagesChange = (messages: Message[]) => {
+    if (activeConversationId) {
+      setConversationMessages((prev) => ({
+        ...prev,
+        [activeConversationId]: messages,
+      }));
+
+      // Update conversation last message and timestamp
+      // if (messages.length > 0) {
+      //   const lastMessage = messages[messages.length - 1];
+      //   setConversations((prev) =>
+      //     prev.map((conv) =>
+      //       conv.id === activeConversationId
+      //         ? {
+      //             ...conv,
+      //             lastMessage: lastMessage.content.slice(0, 50),
+      //             timestamp: new Date(),
+      //           }
+      //         : conv
+      //     )
+      //   );
+      // }
+    }
+  };
+
+  const handleRenameConversation = (id: string, newTitle: string) => {
+    setConversations((prev) =>
+      prev.map((conv) => (conv.id === id ? { ...conv, title: newTitle } : conv))
+    );
+  };
+
+  const currentMessages = activeConversationId
+    ? conversationMessages[activeConversationId] || []
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,9 +191,9 @@ const Derivacion = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Formulario */}
-          <Card>
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <User className="h-5 w-5" />
@@ -395,8 +459,8 @@ const Derivacion = () => {
             </CardContent>
           </Card>
 
-          {/* Recomendación */}
-          <Card>
+          {/* Recomendación - Chat */}
+          <Card className="lg:col-span-3">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <MapPin className="h-5 w-5" />
@@ -406,8 +470,26 @@ const Derivacion = () => {
                 Centro recomendado basado en el análisis del agente inteligente.
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-[600px]">
-              <ChatInterface onSendMessage={handleChatMessage} />
+            <CardContent className="h-[600px] p-0">
+              <div className="flex h-full">
+                <div className="w-64">
+                  <ConversationsList
+                    conversations={conversations}
+                    activeConversationId={activeConversationId}
+                    onSelectConversation={handleSelectConversation}
+                    onNewConversation={handleNewConversation}
+                    onRenameConversation={handleRenameConversation}
+                  />
+                </div>
+                <div className="flex-1 p-6">
+                  <ChatInterface
+                    conversationId={activeConversationId}
+                    messages={currentMessages}
+                    onSendMessage={handleChatMessage}
+                    onMessagesChange={handleMessagesChange}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
