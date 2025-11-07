@@ -7,9 +7,7 @@ import { cn } from "@/lib/utils";
 
 export interface Conversation {
   id: string;
-  title: string;
-  lastMessage?: string;
-  timestamp: Date;
+  name: string;
 }
 
 interface ConversationsListProps {
@@ -58,7 +56,7 @@ export const ConversationsList = ({
 
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
-          {conversations.length === 0 ? (
+          {conversations?.length === 0 ? (
             <div className="text-center py-8 px-4">
               <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">
@@ -66,7 +64,7 @@ export const ConversationsList = ({
               </p>
             </div>
           ) : (
-            conversations.map((conversation) => (
+            conversations?.map((conversation) => (
               <div
                 key={conversation.id}
                 className={cn(
@@ -116,7 +114,7 @@ export const ConversationsList = ({
                       >
                         <div className="flex items-center justify-between">
                           <p className="font-medium text-sm truncate">
-                            {conversation.title}
+                            {conversation.name}
                           </p>
                           <Button
                             size="sm"
@@ -124,17 +122,17 @@ export const ConversationsList = ({
                             className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
                             onClick={(e) => {
                               e.stopPropagation();
-                              startEditing(conversation.id, conversation.title);
+                              startEditing(conversation.id, conversation.name);
                             }}
                           >
                             <Pencil className="h-3 w-3" />
                           </Button>
                         </div>
-                        {conversation.lastMessage && (
+                        {/* {conversation.lastMessage && (
                           <p className="text-xs text-muted-foreground truncate mt-1">
                             {conversation.lastMessage}
                           </p>
-                        )}
+                        )} */}
                       </div>
                     )}
                   </div>
