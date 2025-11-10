@@ -1,53 +1,105 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Brain, Send, User, Bot } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  useConversationMessages,
+  useSendMessage,
+} from "@/hooks/useConversations";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@/hooks/useAuth";
 
-interface Message {
+export interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
 interface ChatInterfaceProps {
-  onSendMessage: (message: string) => Promise<string>;
+  conversationId: string | null;
 }
 
-export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { data: user } = useUser();
+  // Fetch messages from React Query
+  const { data: messages = [], isFetching: messagesLoading } =
+    useConversationMessages(conversationId);
+  // Send message mutation
+  const sendMessageMutation = useSendMessage();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+  const areaRef = useRef<HTMLDivElement>(null);
 
+  useLayoutEffect(() => {
+    // wait for DOM layout to settle
+    const raf = requestAnimationFrame(() => {
+      const viewport = areaRef.current?.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      ) as HTMLElement | null;
+
+      if (!viewport) return;
+
+      // if you keep the invisible anchor, this also works:
+      // messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+      // but scrolling the viewport is the most reliable:
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+    });
+
+    return () => cancelAnimationFrame(raf);
+    // depend on count, not array identity
+  }, [messages.length, conversationId]);
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || !conversationId || sendMessageMutation.isPending)
+      return;
 
     const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
+
+    // Optimistic update
+    queryClient.setQueryData(
+      ["messages", conversationId],
+      (old: Message[] = []) => [...old, userMessage]
+    );
+
+    const messageText = input;
     setInput("");
-    setIsLoading(true);
 
     try {
-      const response = await onSendMessage(input);
+      const response = await sendMessageMutation.mutateAsync({
+        message: messageText,
+        userId: user.id,
+        conversationId,
+      });
+
+      // Add assistant response
       const assistantMessage: Message = {
         role: "assistant",
         content: response,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+
+      queryClient.setQueryData(
+        ["messages", conversationId],
+        (old: Message[] = []) => [...old, assistantMessage]
+      );
     } catch (error) {
+      // Rollback on error
+      queryClient.setQueryData(
+        ["messages", conversationId],
+        (old: Message[] = []) => old.filter((msg) => msg !== userMessage)
+      );
+
+      // Show error message
       const errorMessage: Message = {
         role: "assistant",
         content: "Lo siento, hubo un error al procesar tu mensaje.",
       };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+
+      queryClient.setQueryData(
+        ["messages", conversationId],
+        (old: Message[] = []) => [...old, errorMessage]
+      );
     }
   };
 
@@ -58,6 +110,8 @@ export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
     }
   };
 
+  const isLoading = sendMessageMutation.isPending;
+
   return (
     <div className="flex flex-col h-full">
       {messages.length === 0 ? (
@@ -65,14 +119,16 @@ export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           <div className="text-center">
             <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              Pregunta lo que necesites sobre derivaciones y centros.
+              {conversationId !== null
+                ? "Pregunta lo que necesites sobre derivaciones y centros"
+                : "Crear una conversación para hablar con el agente"}
             </p>
           </div>
         </div>
       ) : (
-        <ScrollArea ref={scrollRef} className="flex-1 pr-4">
+        <ScrollArea ref={areaRef} className="flex-1 pr-4">
           <div className="space-y-4 py-4">
-            {messages.map((message, index) => (
+            {messages?.map((message, index) => (
               <div
                 key={index}
                 className={`flex gap-3 ${
@@ -120,18 +176,23 @@ export const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         </ScrollArea>
       )}
 
-      <div className="mt-4 flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Escribe tu pregunta..."
-          disabled={isLoading}
-        />
-        <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
+      {conversationId !== null && (
+        <div className="mt-4 flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Escribe tu pregunta..."
+            disabled={messagesLoading}
+          />
+          <Button
+            onClick={handleSend}
+            disabled={messagesLoading || !input.trim()}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
