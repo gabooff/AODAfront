@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import ListaDerivaciones from "./pages/ListaDerivaciones";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/lista-derivaciones"
+            element={
+              
+                <ListaDerivaciones />
+
+            }
+/>
 
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -68,7 +68,7 @@ const Index = () => {
                 asChild
                 size="lg"
                 variant="outline"
-                className="text-lg px-8 border-white text-white hover:bg-white hover:text-primary"
+                className="text-lg px-8 border-white text-primary hover:bg-primary hover:text-primary"
               >
                 <Link to="/dashboard">
                   <BarChart3 className="mr-2 h-5 w-5" />
@@ -78,6 +78,20 @@ const Index = () => {
             </div>
           </div>
         </div>
+
+        {/* Acceso rápido a Lista de Derivaciones */}
+        <div className="flex justify-center mt-6">
+          <Link to="/lista-derivaciones">
+            <Button
+              size="lg"
+              variant="secondary"
+              className="text-lg px-8"
+            >
+              Lista de Derivaciones
+            </Button>
+          </Link>
+        </div>
+
       </section>
 
       {/* Características Principales */}
