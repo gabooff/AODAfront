@@ -1,23 +1,13 @@
+import {
+  ChatPayload,
+  ConversationPayload,
+  ConversationResponse,
+} from "@/types";
 import { apiAnova } from "./api";
-
-export interface ChatPayload {
-  message: string;
-  user_id: number;
-  conversation_id: string;
-}
-
-export interface ConversationPayload {
-  user_id: number;
-  name?: string;
-}
-
-export interface MessagesPayload {
-  conversation_id: string;
-}
 
 export async function createConversation(
   conversationPayload: ConversationPayload
-) {
+): Promise<ConversationResponse> {
   const { data } = await apiAnova.post(
     "/agent/conversations/create",
     conversationPayload
@@ -31,12 +21,14 @@ export async function getConversations() {
   return data;
 }
 
-export async function getMessagesOpenAi(messagesPayload: MessagesPayload) {
-  const { data } = await apiAnova.get("/agent/conversations");
+export async function getMessagesOpenAi(conversation_id: string) {
+  const { data } = await apiAnova.get(
+    `/agent/conversations/${conversation_id}`
+  );
   return data;
 }
 
 export async function chatWihAgent(chatPayload: ChatPayload) {
-  const { data } = await apiAnova.post("/agent", chatPayload);
+  const { data } = await apiAnova.post("/agent/chat", chatPayload);
   return data.response;
 }

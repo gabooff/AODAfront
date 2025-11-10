@@ -6,92 +6,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import { MapPin, CirclePlusIcon } from "lucide-react";
+import { MapPin } from "lucide-react";
 import Navigation from "@/components/Navigation";
-
-import { chatWihAgent } from "@/services/apiAgents";
 import { ChatInterface, Message } from "@/components/ChatInterface";
-import {
-  ConversationsList,
-  Conversation,
-} from "@/components/ConversationLists";
-import { useUser } from "@/hooks/useAuth";
-import { useConversations } from "@/hooks/useConversations";
+import { ConversationsList } from "@/components/ConversationLists";
 import FormDerivation from "@/components/FormDerivation";
 
 const Derivacion = () => {
-  const { data: user } = useUser();
-  const { data: conversationList } = useConversations();
-
   // Chat state
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
-  const [conversationMessages, setConversationMessages] = useState<
-    Record<string, Message[]>
-  >({});
-
-  const handleChatMessage = async (message: string): Promise<string> => {
-    const response = await chatWihAgent({
-      message,
-      user_id: user.id,
-      conversation_id: activeConversationId,
-    });
-    return response;
-  };
-
-  const handleNewConversation = () => {
-    const newId = `conv-${Date.now()}`;
-    const newConversation: Conversation = {
-      id: newId,
-      name: `Conversación ${conversations.length + 1}`,
-    };
-    setConversations((prev) => [newConversation, ...prev]);
-    setActiveConversationId(newId);
-    setConversationMessages((prev) => ({ ...prev, [newId]: [] }));
-  };
-
-  const handleSelectConversation = (id: string) => {
-    setActiveConversationId(id);
-  };
-
-  const handleMessagesChange = (messages: Message[]) => {
-    if (activeConversationId) {
-      setConversationMessages((prev) => ({
-        ...prev,
-        [activeConversationId]: messages,
-      }));
-
-      // Update conversation last message and timestamp
-      // if (messages.length > 0) {
-      //   const lastMessage = messages[messages.length - 1];
-      //   setConversations((prev) =>
-      //     prev.map((conv) =>
-      //       conv.id === activeConversationId
-      //         ? {
-      //             ...conv,
-      //             lastMessage: lastMessage.content.slice(0, 50),
-      //             timestamp: new Date(),
-      //           }
-      //         : conv
-      //     )
-      //   );
-      // }
-    }
-  };
-
-  const handleRenameConversation = (id: string, newTitle: string) => {
-    setConversations((prev) =>
-      prev.map((conv) => (conv.id === id ? { ...conv, title: newTitle } : conv))
-    );
-  };
-
-  const currentMessages = activeConversationId
-    ? conversationMessages[activeConversationId] || []
-    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -126,20 +52,12 @@ const Derivacion = () => {
               <div className="flex h-full">
                 <div className="w-64">
                   <ConversationsList
-                    conversations={conversationList}
                     activeConversationId={activeConversationId}
-                    onSelectConversation={handleSelectConversation}
-                    onNewConversation={handleNewConversation}
-                    onRenameConversation={handleRenameConversation}
+                    onSelectConversation={setActiveConversationId}
                   />
                 </div>
                 <div className="flex-1 p-6">
-                  <ChatInterface
-                    conversationId={activeConversationId}
-                    messages={currentMessages}
-                    onSendMessage={handleChatMessage}
-                    onMessagesChange={handleMessagesChange}
-                  />
+                  <ChatInterface conversationId={activeConversationId} />
                 </div>
               </div>
             </CardContent>
@@ -149,5 +67,11 @@ const Derivacion = () => {
     </div>
   );
 };
+
+// const handleRenameConversation = (id: string, newTitle: string) => {
+//   setConversations((prev) =>
+//     prev.map((conv) => (conv.id === id ? { ...conv, title: newTitle } : conv))
+//   );
+// };
 
 export default Derivacion;
