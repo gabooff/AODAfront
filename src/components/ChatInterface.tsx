@@ -24,6 +24,7 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
 
   const { data: user } = useUser();
+  const { data: conversations } = useConversations();
   // Fetch messages from React Query
   const { data: messages = [], isLoadingNewConversation } =
     useConversationMessages(conversationId);
@@ -139,7 +140,7 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
           <div className="text-center">
             <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {conversationId !== null
+              {conversations !== null
                 ? "Pregunta lo que necesites sobre derivaciones y centros"
                 : "Crear una conversación para hablar con el agente"}
             </p>

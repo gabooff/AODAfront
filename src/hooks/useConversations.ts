@@ -7,6 +7,7 @@ import {
 import {
   chatWihAgent,
   createConversation,
+  deleteConversation,
   getConversations,
   getMessagesOpenAi,
 } from "@/services/apiAgents";
@@ -25,6 +26,22 @@ export const useCreateConversation = () => {
   return useMutation({
     mutationFn: async (newConversation: ConversationPayload) => {
       const response = await createConversation(newConversation);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (err) => {
+      alert(err);
+    },
+  });
+};
+
+export const useDeleteConversation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (conversation_id: string) => {
+      const response = await deleteConversation(conversation_id);
       return response;
     },
     onSuccess: () => {
