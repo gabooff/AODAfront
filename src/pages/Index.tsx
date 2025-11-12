@@ -23,9 +23,7 @@ import Navigation from "@/components/Navigation";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-
+    <>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-health-primary via-primary to-health-secondary text-white py-24">
         <div className="container mx-auto px-4 text-center">
@@ -82,16 +80,11 @@ const Index = () => {
         {/* Acceso rápido a Lista de Derivaciones */}
         <div className="flex justify-center mt-6">
           <Link to="/lista-derivaciones">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="text-lg px-8"
-            >
+            <Button size="lg" variant="secondary" className="text-lg px-8">
               Lista de Derivaciones
             </Button>
           </Link>
         </div>
-
       </section>
 
       {/* Características Principales */}
@@ -286,7 +279,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 };
 

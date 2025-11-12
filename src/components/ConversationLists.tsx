@@ -131,9 +131,9 @@ ConversationsListProps) => {
                     ) : (
                       <div
                         className="cursor-pointer"
-                        onClick={() =>
-                          onSelectConversation(conversation.conversation_id)
-                        }
+                        onClick={() => {
+                          onSelectConversation(conversation.conversation_id);
+                        }}
                       >
                         <div className="flex items-center justify-between">
                           <p className="font-medium text-sm truncate">
