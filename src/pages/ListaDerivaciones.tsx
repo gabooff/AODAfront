@@ -17,55 +17,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import DetalleDerivacion, { Derivacion } from "./DetalleDerivacion";
+import DetalleDerivacion from "./DetalleDerivacion";
 import { Link } from "react-router-dom";
-
-// Datos de ejemplo
-const derivacionesData: Derivacion[] = [
-  {
-    rut: "22283451",
-    nombrePaciente: "CASTRO ELIZALDE LOPEZ CONTRERAS",
-    fechaNacimiento: "21/08/1983",
-    fechaInicial: "07/08/2020",
-    centroSalud: "Consultorio N°1- Dr. Ramiro Escalada Vigatana",
-  },
-  {
-    rut: "11400878",
-    nombrePaciente: "CRUZ, ELIZABETH HEREDIA GFS",
-    fechaNacimiento: "27/08/1982",
-    fechaInicial: "07/08/2020",
-    centroSalud: "Centro de Salud familiar Ignacio Domenco",
-  },
-  {
-    rut: "22282011",
-    nombrePaciente: "TELLO ROSALES CLAUDIO MIGUEL",
-    fechaNacimiento: "07/08/1983",
-    fechaInicial: "07/08/2020",
-    centroSalud: "Consultorio N°1- Dr. Ramiro Escalada Vigatana",
-  },
-  {
-    rut: "22282075",
-    nombrePaciente: "FLORES DEL CAMPO BLAS NAZARIO",
-    fechaNacimiento: "30/09/1983",
-    fechaInicial: "07/08/2020",
-    centroSalud: "Consultorio N°2- Dr. Ramiro Escalada Vigatana",
-  },
-  {
-    rut: "21388432",
-    nombrePaciente: "VILLARROEL FLORES BURGOS CHAVEZ",
-    fechaNacimiento: "13/08/1980",
-    fechaInicial: "11/08/2020",
-    centroSalud: "Consultorio N°1- Dr. Ramiro Escalada Vigatana",
-  },
-];
+import { useDerivations } from "@/hooks/useDerivations";
 
 const ListaDerivaciones = () => {
+  const { data: derivations } = useDerivations();
+  console.log(derivations);
+
   const [filtroDerivacion, setFiltroDerivacion] = useState("Todos");
   const [fechaInicio, setFechaInicio] = useState("");
   const [filtroTexto, setFiltroTexto] = useState("");
-  const [derivacionSeleccionada, setDerivacionSeleccionada] = useState<
-    Derivacion | null
-  >(derivacionesData[0] ?? null);
+  const [derivacionSeleccionada, setDerivacionSeleccionada] = useState(
+    derivations ? derivations[0] : []
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-secondary to-primary">
@@ -114,11 +79,6 @@ const ListaDerivaciones = () => {
                 {/* Nueva derivación */}
                 <Button asChild>
                   <Link to="/derivacion">Nueva Derivación</Link>
-                </Button>
-
-                {/* Alertas derivaciones */}
-                <Button asChild variant="secondary">
-                  <Link to="/alertas-derivaciones">Alertas Derivaciones</Link>
                 </Button>
 
                 {/* Volver al inicio */}
@@ -191,41 +151,34 @@ const ListaDerivaciones = () => {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-sidebar hover:bg-sidebar">
-                        <TableHead className="font-bold">Rut</TableHead>
-                        <TableHead className="font-bold">
-                          Nombre Paciente
-                        </TableHead>
-                        <TableHead className="font-bold">
-                          Fecha Nacimiento
-                        </TableHead>
-                        <TableHead className="font-bold">
-                          Fecha Inicial
-                        </TableHead>
+                        <TableHead className="font-bold">ID Caso</TableHead>
+                        <TableHead className="font-bold">Delito</TableHead>
+                        <TableHead className="font-bold">Responsable</TableHead>
+                        <TableHead className="font-bold">Creada</TableHead>
                         <TableHead className="font-bold">
                           Centro de Salud
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {derivacionesData.map((derivacion, index) => (
+                      {derivations?.map((derivacion, index) => (
                         <TableRow
                           key={index}
-                          onClick={() =>
-                            setDerivacionSeleccionada(derivacion)
-                          }
-                          className={`hover:bg-muted/50 cursor-pointer ${
-                            derivacionSeleccionada?.rut === derivacion.rut
-                              ? "bg-muted"
-                              : ""
-                          }`}
+                          onClick={() => setDerivacionSeleccionada(derivacion)}
+                          className={`hover:bg-muted/50 cursor-pointer`}
                         >
                           <TableCell className="font-medium">
-                            {derivacion.rut}
+                            {derivacion?.id}
                           </TableCell>
-                          <TableCell>{derivacion.nombrePaciente}</TableCell>
-                          <TableCell>{derivacion.fechaNacimiento}</TableCell>
-                          <TableCell>{derivacion.fechaInicial}</TableCell>
-                          <TableCell>{derivacion.centroSalud}</TableCell>
+                          <TableCell>{derivacion.crime.name}</TableCell>
+                          <TableCell>
+                            {derivacion?.user?.first_name}{" "}
+                            {derivacion?.user?.last_name}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(derivacion?.created_at).toLocaleString()}
+                          </TableCell>
+                          <TableCell>{derivacion?.center.service}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -235,8 +188,8 @@ const ListaDerivaciones = () => {
                 {/* Paginación */}
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
-                    Mostrando {derivacionesData.length} de{" "}
-                    {derivacionesData.length} resultados
+                    Mostrando {derivations?.length} de {derivations?.length}{" "}
+                    resultados
                   </p>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm">

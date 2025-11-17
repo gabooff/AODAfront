@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import ListaDerivaciones from "./pages/ListaDerivaciones";
+import { AppLayout } from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -20,33 +21,34 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-
-          <Route
-            path="/derivacion"
-            element={
-              <ProtectedRoute>
-                <Derivacion />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/lista-derivaciones"
-            element={
-              
-                <ListaDerivaciones />
-
-            }
-/>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/derivacion"
+              element={
+                <ProtectedRoute>
+                  <Derivacion />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lista-derivaciones"
+              element={
+                <ProtectedRoute>
+                  <ListaDerivaciones />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
 
           <Route path="*" element={<NotFound />} />
         </Routes>

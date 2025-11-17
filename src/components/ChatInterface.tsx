@@ -5,6 +5,7 @@ import { Brain, Send, User, Bot } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useConversationMessages,
+  useConversations,
   useSendMessage,
 } from "@/hooks/useConversations";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,10 +22,11 @@ interface ChatInterfaceProps {
 
 export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const { data: user } = useUser();
+  const { data: conversations } = useConversations();
   // Fetch messages from React Query
-  const { data: messages = [], isFetching: messagesLoading } =
+  const { data: messages = [], isLoadingNewConversation } =
     useConversationMessages(conversationId);
   // Send message mutation
   const sendMessageMutation = useSendMessage();
@@ -41,16 +43,28 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
 
       if (!viewport) return;
 
-      // if you keep the invisible anchor, this also works:
-      // messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
-      // but scrolling the viewport is the most reliable:
       viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
     });
 
     return () => cancelAnimationFrame(raf);
-    // depend on count, not array identity
   }, [messages.length, conversationId]);
+
+  // Scroll to bottom when loading finishes
+  useLayoutEffect(() => {
+    if (!isLoadingNewConversation && messages.length > 0) {
+      const raf = requestAnimationFrame(() => {
+        const viewport = areaRef.current?.querySelector(
+          "[data-radix-scroll-area-viewport]"
+        ) as HTMLElement | null;
+
+        if (!viewport) return;
+
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
+      });
+
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [isLoadingNewConversation, messages.length]);
   const handleSend = async () => {
     if (!input.trim() || !conversationId || sendMessageMutation.isPending)
       return;
@@ -114,12 +128,19 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      {messages.length === 0 ? (
+      {isLoadingNewConversation ? (
+        <div className="flex-1 flex items-center justify-center py-12">
+          <div className="text-center">
+            <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
+            <p className="text-muted-foreground">Cargando conversación...</p>
+          </div>
+        </div>
+      ) : messages.length === 0 ? (
         <div className="flex-1 flex items-center justify-center py-12">
           <div className="text-center">
             <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {conversationId !== null
+              {conversations !== null
                 ? "Pregunta lo que necesites sobre derivaciones y centros"
                 : "Crear una conversación para hablar con el agente"}
             </p>
@@ -183,11 +204,11 @@ export const ChatInterface = ({ conversationId }: ChatInterfaceProps) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Escribe tu pregunta..."
-            disabled={messagesLoading}
+            disabled={sendMessageMutation.isPending}
           />
           <Button
             onClick={handleSend}
-            disabled={messagesLoading || !input.trim()}
+            disabled={sendMessageMutation.isPending || !input.trim()}
           >
             <Send className="h-4 w-4" />
           </Button>

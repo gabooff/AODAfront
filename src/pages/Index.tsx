@@ -1,31 +1,24 @@
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import {
   Shield,
   Brain,
   BarChart3,
-  Users,
-  CheckCircle,
   ArrowRight,
   Zap,
   Target,
   Clock,
 } from "lucide-react";
-import Navigation from "@/components/Navigation";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-
+    <>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-health-primary via-primary to-health-secondary text-white py-24">
         <div className="container mx-auto px-4 text-center">
@@ -51,47 +44,10 @@ const Index = () => {
               atención más apropiado según las características específicas de
               cada caso.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                asChild
-                size="lg"
-                variant="secondary"
-                className="text-lg px-8"
-              >
-                <Link to="/derivacion">
-                  <Brain className="mr-2 h-5 w-5" />
-                  Nueva Derivación
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="text-lg px-8 border-white text-primary hover:bg-primary hover:text-primary"
-              >
-                <Link to="/dashboard">
-                  <BarChart3 className="mr-2 h-5 w-5" />
-                  Ver Dashboard
-                </Link>
-              </Button>
-            </div>
           </div>
         </div>
 
         {/* Acceso rápido a Lista de Derivaciones */}
-        <div className="flex justify-center mt-6">
-          <Link to="/lista-derivaciones">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="text-lg px-8"
-            >
-              Lista de Derivaciones
-            </Button>
-          </Link>
-        </div>
-
       </section>
 
       {/* Características Principales */}
@@ -261,8 +217,8 @@ const Index = () => {
             variant="secondary"
             className="text-lg px-8"
           >
-            <Link to="/derivacion">
-              Iniciar Nueva Derivación
+            <Link to="/login">
+              Iniciar sesión
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
@@ -286,7 +242,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 };
 

@@ -16,6 +16,15 @@ export async function createConversation(
   return data;
 }
 
+export async function deleteConversation(conversation_id: string) {
+  const { data } = await apiAnova.delete(
+    `/agent/conversations/delete/${conversation_id}`,
+    conversation_id
+  );
+
+  return data;
+}
+
 export async function getConversations() {
   const { data } = await apiAnova.get("/agent/conversations");
   return data;

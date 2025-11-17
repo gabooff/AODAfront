@@ -1,11 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   chatWihAgent,
   createConversation,
+  deleteConversation,
   getConversations,
   getMessagesOpenAi,
 } from "@/services/apiAgents";
 import { ConversationPayload, SendMessageParams } from "@/types";
+import { useEffect, useRef } from "react";
 
 export function useConversations() {
   return useQuery({
@@ -30,13 +37,46 @@ export const useCreateConversation = () => {
   });
 };
 
+export const useDeleteConversation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (conversation_id: string) => {
+      const response = await deleteConversation(conversation_id);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (err) => {
+      alert(err);
+    },
+  });
+};
+
 export const useConversationMessages = (conversationId: string | null) => {
-  return useQuery({
+  const prevConversationIdRef = useRef(conversationId);
+
+  const query = useQuery({
     queryKey: ["messages", conversationId],
     queryFn: () => getMessagesOpenAi(conversationId!),
-    enabled: !!conversationId, // Only fetch when we have an ID,
+    enabled: !!conversationId,
     initialData: [],
   });
+
+  // Check if conversation ID changed
+  const conversationChanged = prevConversationIdRef.current !== conversationId;
+
+  // Update ref after render
+  useEffect(() => {
+    prevConversationIdRef.current = conversationId;
+  });
+
+  const isLoadingNewConversation = conversationChanged && query.isFetching;
+
+  return {
+    ...query,
+    isLoadingNewConversation, // Use this for your spinner
+  };
 };
 
 export const useSendMessage = () => {

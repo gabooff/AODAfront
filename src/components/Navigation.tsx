@@ -1,4 +1,12 @@
-import { Shield, BarChart3, FileCheck, Home, User, LogOut } from "lucide-react";
+import {
+  Shield,
+  BarChart3,
+  FileCheck,
+  Home,
+  User,
+  LogOut,
+  HospitalIcon,
+} from "lucide-react";
 import { useIsAuthenticated, useLogout } from "@/hooks/useAuth";
 import NavLink from "./NavLink";
 
@@ -7,6 +15,11 @@ const Navigation = () => {
   const logOut = useLogout();
   const navItems = isAuthenticated
     ? [
+        {
+          href: "/lista-derivaciones",
+          label: "Derivaciones",
+          icon: HospitalIcon,
+        },
         { href: "/derivacion", label: "Nueva Derivación", icon: FileCheck },
         { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
         { href: "/logout", label: "Salir", icon: LogOut, onClick: logOut },
